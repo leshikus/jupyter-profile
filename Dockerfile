@@ -15,11 +15,6 @@ ENV SHELL=/bin/bash
 COPY --chown=${USER}:${USER} requirements.txt /tmp/requirements.txt
 COPY --from=python_builder --chown=${USER}:${USER} /app/jupyter_codeserver_proxy-/dist/*.whl /opt/jupyter_codeserver_proxy/dist/
 
-# install all dependencies
-# disable JupyterLab announcement pop-up (https://jupyterlab.readthedocs.io/en/stable/user/announcements.html)
-RUN pip install --no-cache-dir -r /tmp/requirements.txt /opt/jupyter_codeserver_proxy/dist/*.whl infractl; \
-    jupyter labextension disable "@jupyterlab/apputils-extension:announcements"
-
 RUN set -ex; \
     export DEBIAN_FRONTEND=noninteractive; \
     apt-get update -y; \
@@ -35,9 +30,14 @@ RUN set -ex; \
         bash-completion \
         cmake gcc g++ ninja-build git clang-format \
         sudo \
-        pixz \
+        python3-pip \
         ; \
     rm -rf /var/lib/apt/lists/*
+
+# install all dependencies
+# disable JupyterLab announcement pop-up (https://jupyterlab.readthedocs.io/en/stable/user/announcements.html)
+RUN pip install --no-cache-dir -r /tmp/requirements.txt /opt/jupyter_codeserver_proxy/dist/*.whl infractl; \
+    jupyter labextension disable "@jupyterlab/apputils-extension:announcements"
 
 RUN set -ex; \
     adduser \
@@ -48,12 +48,12 @@ RUN set -ex; \
         --force-badname \
         ${USER}; \
     usermod -aG sudo ${USER}; \
-    echo "%sudo   ALL=(ALL:ALL) NOPASSWD:ALL" > /etc/sudoers
+    echo "%sudo   ALL=(ALL:ALL) NOPASSWD:ALL" > /etc/sudoers; \
+    chown -R ${USER}:${USER} ${HOME}
 
 COPY entrypoint.sh /template/
 
 USER ${USER}
-
 WORKDIR ${HOME}
 
 RUN curl -fsSL https://code-server.dev/install.sh | sh && rm -rf "${HOME}/.cache"
