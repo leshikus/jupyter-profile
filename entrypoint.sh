@@ -3,29 +3,16 @@
 set -e
 set -vx
 
-conda_prefix=$HOME/.conda
 jupyterlab_env="base"
 kernel_env="python-3.9"
 
 # Fix the owner and permissions for /home/jovyan
 # TODO: check if passwordless sudo is enabled
-sudo chown jovyan:jovyan /home/jovyan
 sudo chmod 00700 /home/jovyan
 
 cd ~
 
-rm -rf $conda_prefix #FIXME
-
-if [[ ! -d $conda_prefix ]]; then
-  echo "$conda_prefix does not exists, copying from /template"
-  tar x -Ipixz -f /template/conda.tar.xz
-fi
-
-if [[ ! -f ~/.profile ]]; then
-  echo "No .profile in $HOME, creating one"
-  echo "source $conda_prefix/etc/profile.d/conda.sh" >> ~/.profile
-  echo "conda activate python-3.9" >> ~/.profile
-fi
+rm -rf $HOME/.conda
 
 if [[ ! -f ~/.jupyter/jupyter_config.json ]]; then
   echo "no .jupyter/jupyter_config.json in $HOME, creating one"
@@ -34,7 +21,7 @@ if [[ ! -f ~/.jupyter/jupyter_config.json ]]; then
   cat <<EOF > ~/.jupyter/jupyter_config.json
 {
   "CondaKernelSpecManager": {
-    "conda_only": true,
+    "conda_only": false,
     "name_format": "{display_name}"
   }
 }
@@ -47,10 +34,6 @@ EOF
   unset kernel_json
 fi
 
-source $conda_prefix/etc/profile.d/conda.sh
-conda activate $jupyterlab_env
-
-unset conda_prefix
 unset jupyterlab_env
 unset kernel_env
 
@@ -59,7 +42,5 @@ jupyter kernelspec remove -y python3 || true
 
 # Remove lost+found
 rm -rf lost+found
-
-find ~/.conda -name '*singleuser'
 
 exec jupyterhub-singleuser

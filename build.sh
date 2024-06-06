@@ -1,7 +1,7 @@
 #!/bin/bash
 
 REGISTRY=localhost:5000
-TAG=minimal-jupyter-env:0.0.11
+TAG=minimal-jupyter-env:0.0.14
 
 set -e
 
